@@ -1,5 +1,5 @@
 {
-  "name": "notes-backend",
+  "name": "noteflow",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -18,8 +18,13 @@
   "devDependencies": {
     "nodemon": "^3.1.0"
   },
-  "description": "",
-  "keywords": [],
+  "description": "A full-stack Express, MongoDB, and vanilla JavaScript note-taking app with JWT authentication.",
+  "keywords": [
+    "notes",
+    "express",
+    "mongodb",
+    "jwt"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs"
