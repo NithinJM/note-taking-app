@@ -5,6 +5,7 @@ const AUTH_TOKEN_KEY = "noteflow.authToken";
 const state = {
   activeFilter: "all",
   activeTag: "all",
+  authMode: "login",
   notes: [],
   search: "",
   selectedId: null,
@@ -17,21 +18,27 @@ const els = {
   archiveButton: document.getElementById("archiveButton"),
   archivedCount: document.getElementById("archivedCount"),
   allCount: document.getElementById("allCount"),
+  authEyebrow: document.getElementById("authEyebrow"),
+  authForm: document.getElementById("authForm"),
+  authHeading: document.getElementById("authHeading"),
   authPanel: document.getElementById("authPanel"),
+  authSubmitText: document.getElementById("authSubmitText"),
   categoryInput: document.getElementById("categoryInput"),
   clearButton: document.getElementById("clearButton"),
   contentInput: document.getElementById("contentInput"),
   deleteButton: document.getElementById("deleteButton"),
   editorHeading: document.getElementById("editorHeading"),
   editorMode: document.getElementById("editorMode"),
-  facebookLoginButton: document.getElementById("facebookLoginButton"),
+  emailInput: document.getElementById("emailInput"),
   filterLabel: document.getElementById("filterLabel"),
-  googleLoginButton: document.getElementById("googleLoginButton"),
   listHeading: document.getElementById("listHeading"),
   logoutButton: document.getElementById("logoutButton"),
+  nameField: document.getElementById("nameField"),
+  nameInput: document.getElementById("nameInput"),
   newNoteBtn: document.getElementById("newNoteBtn"),
   noteForm: document.getElementById("noteForm"),
   notesList: document.getElementById("notesList"),
+  passwordInput: document.getElementById("passwordInput"),
   pinButton: document.getElementById("pinButton"),
   pinnedCount: document.getElementById("pinnedCount"),
   saveButtonText: document.getElementById("saveButtonText"),
@@ -40,15 +47,14 @@ const els = {
   tagList: document.getElementById("tagList"),
   tagsInput: document.getElementById("tagsInput"),
   titleInput: document.getElementById("titleInput"),
+  toggleAuthMode: document.getElementById("toggleAuthMode"),
   userName: document.getElementById("userName"),
   visibleCount: document.getElementById("visibleCount"),
   workspace: document.getElementById("workspace")
 };
 
 function refreshIcons() {
-  if (window.lucide) {
-    window.lucide.createIcons();
-  }
+  if (window.lucide) window.lucide.createIcons();
 }
 
 function setStatus(message) {
@@ -62,21 +68,28 @@ function getAuthHeaders() {
 function setNavigationEnabled(isEnabled) {
   els.newNoteBtn.disabled = !isEnabled;
   els.searchInput.disabled = !isEnabled;
-
   document.querySelectorAll("[data-filter]").forEach((button) => {
     button.disabled = !isEnabled;
   });
 }
 
 function setAccountDisplay() {
-  if (!state.user) {
-    els.accountMenu.hidden = true;
-    els.userName.textContent = "";
-    return;
-  }
+  els.accountMenu.hidden = !state.user;
+  els.userName.textContent = state.user?.name || state.user?.email || "";
+}
 
-  els.userName.textContent = state.user.name || state.user.email || "Signed in";
-  els.accountMenu.hidden = false;
+function setAuthMode(mode) {
+  state.authMode = mode;
+  const isRegister = mode === "register";
+
+  els.nameField.hidden = !isRegister;
+  els.nameInput.required = isRegister;
+  els.authEyebrow.textContent = isRegister ? "Create account" : "Welcome back";
+  els.authHeading.textContent = isRegister ? "Create your NoteFlow account" : "Sign in to NoteFlow";
+  els.authSubmitText.textContent = isRegister ? "Create account" : "Sign in";
+  els.toggleAuthMode.textContent = isRegister ? "Already have an account?" : "Create an account";
+  els.passwordInput.autocomplete = isRegister ? "new-password" : "current-password";
+  refreshIcons();
 }
 
 function resetEditorDisplay() {
@@ -85,13 +98,11 @@ function resetEditorDisplay() {
   els.editorMode.textContent = "New note";
   els.editorHeading.textContent = "Capture something useful";
   els.saveButtonText.textContent = "Save note";
-  els.pinButton.disabled = true;
-  els.archiveButton.disabled = true;
-  els.deleteButton.disabled = true;
-  els.pinButton.classList.remove("is-active");
-  els.archiveButton.classList.remove("is-active");
-  els.pinButton.setAttribute("aria-pressed", "false");
-  els.archiveButton.setAttribute("aria-pressed", "false");
+  [els.pinButton, els.archiveButton, els.deleteButton].forEach((button) => {
+    button.disabled = true;
+    button.classList.remove("is-active");
+    button.setAttribute("aria-pressed", "false");
+  });
 }
 
 function showAuthGate(message = "Sign in to continue.") {
@@ -123,22 +134,9 @@ function clearAuth(message = "Signed out.") {
 
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
-
-  if (className) {
-    element.className = className;
-  }
-
-  if (text !== undefined) {
-    element.textContent = text;
-  }
-
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
   return element;
-}
-
-function createIcon(name) {
-  const icon = document.createElement("i");
-  icon.setAttribute("data-lucide", name);
-  return icon;
 }
 
 function formatDate(value) {
@@ -155,10 +153,7 @@ function getSelectedNote() {
 }
 
 function getTagValues() {
-  return els.tagsInput.value
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
+  return els.tagsInput.value.split(",").map((tag) => tag.trim()).filter(Boolean);
 }
 
 function getVisibleNotes() {
@@ -169,24 +164,18 @@ function getVisibleNotes() {
       (state.activeFilter === "all" && !note.isArchived) ||
       (state.activeFilter === "pinned" && note.isPinned && !note.isArchived) ||
       (state.activeFilter === "archived" && note.isArchived);
-
-    const matchesTag =
-      state.activeTag === "all" ||
+    const matchesTag = state.activeTag === "all" ||
       note.tags.some((tag) => tag.toLowerCase() === state.activeTag);
-
-    const searchable = [
-      note.title,
-      note.content,
-      note.category,
-      note.tags.join(" ")
-    ].join(" ").toLowerCase();
+    const searchable = [note.title, note.content, note.category, note.tags.join(" ")]
+      .join(" ")
+      .toLowerCase();
 
     return matchesFilter && matchesTag && searchable.includes(query);
   });
 }
 
-async function requestAuth(path, options = {}) {
-  const response = await fetch(`${AUTH_API}${path}`, {
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
       ...getAuthHeaders(),
@@ -194,40 +183,14 @@ async function requestAuth(path, options = {}) {
     },
     ...options
   });
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || "Authentication failed");
+    if (response.status === 401 && state.token) clearAuth("Please sign in again.");
+    throw new Error(data.message || "Request failed");
   }
 
-  return response.json();
-}
-
-async function requestNote(path = "", options = {}) {
-  if (!state.token) {
-    throw new Error("Sign in to continue.");
-  }
-
-  const response = await fetch(`${API}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeaders(),
-      ...(options.headers || {})
-    },
-    ...options
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-
-    if (response.status === 401) {
-      clearAuth("Please sign in again.");
-    }
-
-    throw new Error(error.message || "Request failed");
-  }
-
-  return response.json();
+  return data;
 }
 
 async function loadNotes() {
@@ -237,19 +200,13 @@ async function loadNotes() {
   }
 
   setStatus("Loading notes...");
-  state.notes = await requestNote();
+  state.notes = await requestJson(API);
 
   if (!state.selectedId && state.notes.length > 0) {
-    state.selectedId = state.notes[0].id;
     fillEditor(state.notes[0]);
   } else if (state.selectedId) {
     const selected = getSelectedNote();
-
-    if (selected) {
-      fillEditor(selected);
-    } else {
-      startNewNote(false);
-    }
+    selected ? fillEditor(selected) : startNewNote(false);
   }
 
   render();
@@ -266,7 +223,6 @@ function render() {
 
 function renderCounts() {
   const activeNotes = state.notes.filter((note) => !note.isArchived);
-
   els.allCount.textContent = activeNotes.length;
   els.pinnedCount.textContent = activeNotes.filter((note) => note.isPinned).length;
   els.archivedCount.textContent = state.notes.filter((note) => note.isArchived).length;
@@ -277,41 +233,26 @@ function renderFilters() {
     button.classList.toggle("is-active", button.dataset.filter === state.activeFilter);
   });
 
-  const labels = {
-    all: "All notes",
-    pinned: "Pinned",
-    archived: "Archive"
-  };
-
+  const labels = { all: "All notes", pinned: "Pinned", archived: "Archive" };
   els.filterLabel.textContent = labels[state.activeFilter];
-  els.listHeading.textContent = state.activeTag === "all"
-    ? "Notes"
-    : `#${state.activeTag}`;
+  els.listHeading.textContent = state.activeTag === "all" ? "Notes" : `#${state.activeTag}`;
 }
 
 function renderTags() {
   const tagCounts = new Map();
 
-  state.notes
-    .filter((note) => !note.isArchived)
-    .forEach((note) => {
-      note.tags.forEach((tag) => {
-        const key = tag.toLowerCase();
-        tagCounts.set(key, {
-          label: tag,
-          count: (tagCounts.get(key)?.count || 0) + 1
-        });
-      });
+  state.notes.filter((note) => !note.isArchived).forEach((note) => {
+    note.tags.forEach((tag) => {
+      const key = tag.toLowerCase();
+      tagCounts.set(key, { label: tag, count: (tagCounts.get(key)?.count || 0) + 1 });
     });
+  });
 
   els.tagList.innerHTML = "";
   els.tagList.appendChild(createTagButton("All", "all", state.notes.filter((note) => !note.isArchived).length));
-
-  [...tagCounts.entries()]
-    .sort((a, b) => a[1].label.localeCompare(b[1].label))
-    .forEach(([key, value]) => {
-      els.tagList.appendChild(createTagButton(value.label, key, value.count));
-    });
+  [...tagCounts.entries()].sort((a, b) => a[1].label.localeCompare(b[1].label)).forEach(([key, value]) => {
+    els.tagList.appendChild(createTagButton(value.label, key, value.count));
+  });
 }
 
 function createTagButton(label, value, count) {
@@ -323,7 +264,6 @@ function createTagButton(label, value, count) {
     state.activeTag = value;
     render();
   });
-
   return button;
 }
 
@@ -337,9 +277,7 @@ function renderNotesList() {
     return;
   }
 
-  visibleNotes.forEach((note) => {
-    els.notesList.appendChild(createNoteCard(note));
-  });
+  visibleNotes.forEach((note) => els.notesList.appendChild(createNoteCard(note)));
 }
 
 function createNoteCard(note) {
@@ -350,32 +288,19 @@ function createNoteCard(note) {
 
   const header = createElement("div", "note-card-header");
   header.appendChild(createElement("h3", "", note.title));
+  if (note.isPinned) header.appendChild(createElement("span", "state-pill", "Pinned"));
 
-  if (note.isPinned) {
-    const pinned = createElement("span", "state-pill", "Pinned");
-    header.appendChild(pinned);
-  }
-
-  const excerpt = note.content.trim()
-    ? note.content.trim().slice(0, 130)
-    : "Empty note";
   const meta = createElement("div", "note-meta");
   meta.appendChild(createElement("span", "", note.category));
   meta.appendChild(createElement("span", "", formatDate(note.updatedAt)));
-  const tagRow = createElement("div", "tag-row");
 
-  note.tags.slice(0, 4).forEach((tag) => {
-    tagRow.appendChild(createElement("span", "note-tag", tag));
-  });
+  const tagRow = createElement("div", "tag-row");
+  note.tags.slice(0, 4).forEach((tag) => tagRow.appendChild(createElement("span", "note-tag", tag)));
 
   card.appendChild(header);
-  card.appendChild(createElement("p", "", excerpt));
+  card.appendChild(createElement("p", "", note.content.trim() ? note.content.trim().slice(0, 130) : "Empty note"));
   card.appendChild(meta);
-
-  if (note.tags.length > 0) {
-    card.appendChild(tagRow);
-  }
-
+  if (note.tags.length > 0) card.appendChild(tagRow);
   return card;
 }
 
@@ -406,20 +331,11 @@ function startNewNote(shouldFocus = true) {
   resetEditorDisplay();
   renderNotesList();
   refreshIcons();
-
-  if (shouldFocus) {
-    els.titleInput.focus();
-  }
+  if (shouldFocus) els.titleInput.focus();
 }
 
 async function saveNote(event) {
   event.preventDefault();
-
-  if (!state.token) {
-    showAuthGate("Sign in to save notes.");
-    return;
-  }
-
   const title = els.titleInput.value.trim();
   const content = els.contentInput.value.trim();
 
@@ -441,8 +357,8 @@ async function saveNote(event) {
   try {
     setStatus(existing ? "Updating note..." : "Saving note...");
     const saved = existing
-      ? await requestNote(`/${existing.id}`, { method: "PUT", body: JSON.stringify(payload) })
-      : await requestNote("", { method: "POST", body: JSON.stringify(payload) });
+      ? await requestJson(`${API}/${existing.id}`, { method: "PUT", body: JSON.stringify(payload) })
+      : await requestJson(API, { method: "POST", body: JSON.stringify(payload) });
 
     state.selectedId = saved.id;
     await loadNotes();
@@ -454,24 +370,15 @@ async function saveNote(event) {
 }
 
 async function updateSelectedNote(changes, message) {
-  if (!state.token) {
-    showAuthGate("Sign in to update notes.");
-    return;
-  }
-
   const note = getSelectedNote();
-
-  if (!note) {
-    return;
-  }
+  if (!note) return;
 
   try {
     setStatus(message);
-    const updated = await requestNote(`/${note.id}`, {
+    const updated = await requestJson(`${API}/${note.id}`, {
       method: "PUT",
       body: JSON.stringify({ ...note, ...changes })
     });
-
     state.selectedId = updated.id;
     await loadNotes();
     fillEditor(updated);
@@ -481,20 +388,12 @@ async function updateSelectedNote(changes, message) {
 }
 
 async function deleteSelectedNote() {
-  if (!state.token) {
-    showAuthGate("Sign in to delete notes.");
-    return;
-  }
-
   const note = getSelectedNote();
-
-  if (!note || !confirm(`Delete "${note.title}"?`)) {
-    return;
-  }
+  if (!note || !confirm(`Delete "${note.title}"?`)) return;
 
   try {
     setStatus("Deleting note...");
-    await requestNote(`/${note.id}`, { method: "DELETE" });
+    await requestJson(`${API}/${note.id}`, { method: "DELETE" });
     state.selectedId = null;
     await loadNotes();
     startNewNote(false);
@@ -504,29 +403,32 @@ async function deleteSelectedNote() {
   }
 }
 
-function handleOAuthRedirect() {
-  if (!window.location.hash) {
-    return;
+async function handleAuth(event) {
+  event.preventDefault();
+
+  const payload = {
+    email: els.emailInput.value.trim(),
+    password: els.passwordInput.value
+  };
+
+  if (state.authMode === "register") payload.name = els.nameInput.value.trim();
+
+  try {
+    setStatus(state.authMode === "register" ? "Creating account..." : "Signing in...");
+    const data = await requestJson(`${AUTH_API}/${state.authMode === "register" ? "register" : "login"}`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+    state.token = data.token;
+    state.user = data.user;
+    els.authForm.reset();
+    showWorkspace();
+    await loadNotes();
+  } catch (err) {
+    setStatus(err.message);
   }
-
-  const params = new URLSearchParams(window.location.hash.slice(1));
-  const token = params.get("auth_token");
-  const error = params.get("auth_error");
-
-  if (!token && !error) {
-    return;
-  }
-
-  window.history.replaceState(null, "", window.location.pathname + window.location.search);
-
-  if (token) {
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
-    state.token = token;
-    setStatus("Signed in.");
-    return;
-  }
-
-  showAuthGate(error || "Sign in failed.");
 }
 
 async function loadCurrentUser() {
@@ -536,7 +438,7 @@ async function loadCurrentUser() {
   }
 
   try {
-    const data = await requestAuth("/me");
+    const data = await requestJson(`${AUTH_API}/me`);
     state.user = data.user;
     return true;
   } catch (err) {
@@ -546,7 +448,7 @@ async function loadCurrentUser() {
 }
 
 async function initialize() {
-  handleOAuthRedirect();
+  setAuthMode("login");
 
   if (!state.token) {
     showAuthGate();
@@ -554,22 +456,15 @@ async function initialize() {
   }
 
   setStatus("Checking sign in...");
-
   if (await loadCurrentUser()) {
     showWorkspace();
     await loadNotes();
   }
 }
 
-function startOAuth(provider) {
-  setStatus(`Opening ${provider} sign in...`);
-  window.location.href = `${AUTH_API}/${provider}`;
-}
-
-els.googleLoginButton.addEventListener("click", () => startOAuth("google"));
-els.facebookLoginButton.addEventListener("click", () => startOAuth("facebook"));
+els.authForm.addEventListener("submit", handleAuth);
+els.toggleAuthMode.addEventListener("click", () => setAuthMode(state.authMode === "login" ? "register" : "login"));
 els.logoutButton.addEventListener("click", () => clearAuth());
-
 els.noteForm.addEventListener("submit", saveNote);
 els.newNoteBtn.addEventListener("click", () => startNewNote());
 els.clearButton.addEventListener("click", () => startNewNote());
@@ -582,23 +477,17 @@ els.archiveButton.addEventListener("click", () => {
   const note = getSelectedNote();
   updateSelectedNote({ isArchived: !note?.isArchived }, note?.isArchived ? "Restoring note..." : "Archiving note...");
 });
-
 els.notesList.addEventListener("click", (event) => {
   const card = event.target.closest("[data-note-id]");
-
-  if (!card) {
-    return;
-  }
+  if (!card) return;
 
   const note = state.notes.find((item) => item.id === card.dataset.noteId);
-
   if (note) {
     fillEditor(note);
     renderNotesList();
     refreshIcons();
   }
 });
-
 document.querySelectorAll("[data-filter]").forEach((button) => {
   button.addEventListener("click", () => {
     state.activeFilter = button.dataset.filter;
@@ -606,12 +495,9 @@ document.querySelectorAll("[data-filter]").forEach((button) => {
     render();
   });
 });
-
 els.searchInput.addEventListener("input", (event) => {
   state.search = event.target.value;
   renderNotesList();
 });
 
-initialize().catch((err) => {
-  setStatus(err.message);
-});
+initialize().catch((err) => setStatus(err.message));

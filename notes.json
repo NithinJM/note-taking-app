@@ -1,0 +1,29 @@
+[
+  {
+    "id": "sample-project-ideas",
+    "title": "Project ideas",
+    "content": "Build a note taking app with search, pinning, and a clean Express API.",
+    "category": "School",
+    "tags": [
+      "assignment",
+      "express"
+    ],
+    "isPinned": true,
+    "isArchived": false,
+    "createdAt": "2026-06-02T00:00:00.000Z",
+    "updatedAt": "2026-06-02T00:00:00.000Z"
+  },
+  {
+    "id": "sample-grocery-list",
+    "title": "Grocery list",
+    "content": "Coffee, apples, rice, and notebook paper.",
+    "category": "Personal",
+    "tags": [
+      "errands"
+    ],
+    "isPinned": false,
+    "isArchived": false,
+    "createdAt": "2026-06-02T00:00:00.000Z",
+    "updatedAt": "2026-06-02T00:00:00.000Z"
+  }
+]

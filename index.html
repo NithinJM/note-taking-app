@@ -12,9 +12,7 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Notes navigation">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">
-          <i data-lucide="notebook-pen"></i>
-        </div>
+        <div class="brand-mark" aria-hidden="true"><i data-lucide="notebook-pen"></i></div>
         <div>
           <p class="eyebrow">Workspace</p>
           <h1>NoteFlow</h1>
@@ -28,27 +26,18 @@
 
       <nav class="filter-list" aria-label="Note filters">
         <button class="filter-button is-active" type="button" data-filter="all">
-          <i data-lucide="inbox"></i>
-          <span>All notes</span>
-          <strong id="allCount">0</strong>
+          <i data-lucide="inbox"></i><span>All notes</span><strong id="allCount">0</strong>
         </button>
         <button class="filter-button" type="button" data-filter="pinned">
-          <i data-lucide="pin"></i>
-          <span>Pinned</span>
-          <strong id="pinnedCount">0</strong>
+          <i data-lucide="pin"></i><span>Pinned</span><strong id="pinnedCount">0</strong>
         </button>
         <button class="filter-button" type="button" data-filter="archived">
-          <i data-lucide="archive"></i>
-          <span>Archive</span>
-          <strong id="archivedCount">0</strong>
+          <i data-lucide="archive"></i><span>Archive</span><strong id="archivedCount">0</strong>
         </button>
       </nav>
 
       <section class="tag-panel" aria-label="Tags">
-        <div class="panel-heading">
-          <i data-lucide="tags"></i>
-          <h2>Tags</h2>
-        </div>
+        <div class="panel-heading"><i data-lucide="tags"></i><h2>Tags</h2></div>
         <div class="tag-list" id="tagList"></div>
       </section>
     </aside>
@@ -64,31 +53,36 @@
           <div class="account-menu" id="accountMenu" hidden>
             <span id="userName"></span>
             <button class="secondary-action compact" id="logoutButton" type="button">
-              <i data-lucide="log-out"></i>
-              <span>Sign out</span>
+              <i data-lucide="log-out"></i><span>Sign out</span>
             </button>
           </div>
         </div>
       </header>
 
       <section class="auth-panel" id="authPanel" aria-label="Sign in">
-        <div class="auth-card">
-          <div class="auth-mark" aria-hidden="true">
-            <i data-lucide="shield-check"></i>
+        <form class="auth-card" id="authForm">
+          <div class="auth-mark" aria-hidden="true"><i data-lucide="shield-check"></i></div>
+          <p class="eyebrow" id="authEyebrow">Welcome back</p>
+          <h2 id="authHeading">Sign in to NoteFlow</h2>
+          <div class="auth-fields">
+            <div id="nameField" hidden>
+              <label class="field-label" for="nameInput">Name</label>
+              <input id="nameInput" name="name" type="text" autocomplete="name" />
+            </div>
+            <div>
+              <label class="field-label" for="emailInput">Email</label>
+              <input id="emailInput" name="email" type="email" autocomplete="email" required />
+            </div>
+            <div>
+              <label class="field-label" for="passwordInput">Password</label>
+              <input id="passwordInput" name="password" type="password" autocomplete="current-password" required />
+            </div>
           </div>
-          <p class="eyebrow">Sign in</p>
-          <h2>NoteFlow</h2>
-          <div class="auth-actions">
-            <button class="provider-action google" id="googleLoginButton" type="button">
-              <span class="provider-mark" aria-hidden="true">G</span>
-              <span>Continue with Google</span>
-            </button>
-            <button class="provider-action facebook" id="facebookLoginButton" type="button">
-              <span class="provider-mark" aria-hidden="true">f</span>
-              <span>Continue with Facebook</span>
-            </button>
-          </div>
-        </div>
+          <button class="save-action" type="submit">
+            <i data-lucide="log-in"></i><span id="authSubmitText">Sign in</span>
+          </button>
+          <button class="link-button" id="toggleAuthMode" type="button">Create an account</button>
+        </form>
       </section>
 
       <div class="workspace" id="workspace" hidden>
@@ -100,7 +94,6 @@
             </div>
             <span class="count-pill" id="visibleCount">0</span>
           </div>
-
           <div class="notes-list" id="notesList"></div>
         </section>
 
@@ -111,7 +104,6 @@
                 <p class="eyebrow" id="editorMode">New note</p>
                 <h2 id="editorHeading">Capture something useful</h2>
               </div>
-
               <div class="tool-buttons">
                 <button class="icon-button" id="pinButton" type="button" title="Pin note" aria-label="Pin note" disabled>
                   <i data-lucide="pin"></i>
@@ -133,7 +125,6 @@
                 <label class="field-label" for="categoryInput">Category</label>
                 <input id="categoryInput" name="category" type="text" placeholder="General" autocomplete="off" />
               </div>
-
               <div>
                 <label class="field-label" for="tagsInput">Tags</label>
                 <input id="tagsInput" name="tags" type="text" placeholder="work, ideas" autocomplete="off" />
@@ -145,12 +136,10 @@
 
             <div class="editor-actions">
               <button class="secondary-action" id="clearButton" type="button">
-                <i data-lucide="rotate-ccw"></i>
-                <span>Clear</span>
+                <i data-lucide="rotate-ccw"></i><span>Clear</span>
               </button>
               <button class="save-action" type="submit">
-                <i data-lucide="save"></i>
-                <span id="saveButtonText">Save note</span>
+                <i data-lucide="save"></i><span id="saveButtonText">Save note</span>
               </button>
             </div>
           </form>

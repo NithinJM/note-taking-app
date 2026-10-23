@@ -76,19 +76,29 @@ button:disabled {
   gap: 12px;
 }
 
-.brand-mark {
+.brand-mark,
+.auth-mark {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
   border-radius: 8px;
+}
+
+.brand-mark {
   background: var(--accent);
+}
+
+.auth-mark {
+  background: var(--panel-muted);
+  color: var(--accent);
 }
 
 .brand h1,
 .section-title h2,
 .editor-toolbar h2,
-.panel-heading h2 {
+.panel-heading h2,
+.auth-card h2 {
   margin: 0;
   letter-spacing: 0;
 }
@@ -116,8 +126,8 @@ button:disabled {
 .filter-button,
 .tag-chip,
 .note-card,
-.icon-button {
-  border: 0;
+.icon-button,
+.link-button {
   border-radius: 8px;
 }
 
@@ -130,6 +140,7 @@ button:disabled {
   gap: 8px;
   min-height: 44px;
   padding: 0 16px;
+  border: 0;
   font-weight: 700;
 }
 
@@ -157,6 +168,7 @@ button:disabled {
   width: 100%;
   min-height: 44px;
   padding: 0 12px;
+  border: 0;
   background: transparent;
   color: #dce3d7;
   text-align: left;
@@ -200,6 +212,7 @@ button:disabled {
 .tag-chip {
   max-width: 100%;
   padding: 7px 10px;
+  border: 0;
   background: var(--sidebar-soft);
   color: #eaf0e4;
   font-size: 0.86rem;
@@ -241,7 +254,6 @@ button:disabled {
   width: 100%;
   border: 0;
   outline: 0;
-  color: var(--ink);
 }
 
 .status-text {
@@ -283,7 +295,7 @@ button:disabled {
 .auth-card {
   display: grid;
   gap: 16px;
-  width: min(420px, 100%);
+  width: min(430px, 100%);
   padding: 28px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -292,59 +304,20 @@ button:disabled {
 }
 
 .auth-card h2 {
-  margin: 0;
   font-size: 1.45rem;
 }
 
-.auth-mark {
+.auth-fields {
   display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 8px;
-  background: var(--panel-muted);
-  color: var(--accent);
+  gap: 12px;
 }
 
-.auth-actions {
-  display: grid;
-  gap: 10px;
-}
-
-.provider-action {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  align-items: center;
-  gap: 10px;
-  min-height: 48px;
-  padding: 0 14px;
+.link-button {
+  min-height: 40px;
   border: 1px solid var(--border);
-  border-radius: 8px;
   background: #ffffff;
-  color: var(--ink);
-  font-weight: 800;
-  text-align: left;
-}
-
-.provider-action:hover {
-  border-color: var(--blue);
   color: var(--blue);
-}
-
-.provider-action.facebook:hover {
-  border-color: #1877f2;
-  color: #1877f2;
-}
-
-.provider-mark {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--panel-muted);
-  font-size: 0.95rem;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .workspace {
@@ -518,6 +491,8 @@ button:disabled {
 }
 
 .field-label {
+  display: block;
+  margin-bottom: 6px;
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 800;
@@ -569,7 +544,8 @@ textarea:focus {
   color: var(--ink);
 }
 
-.secondary-action:hover {
+.secondary-action:hover,
+.link-button:hover {
   border-color: var(--blue);
   color: var(--blue);
 }
@@ -615,7 +591,9 @@ svg {
   }
 
   .topbar-actions,
-  .account-menu {
+  .account-menu,
+  .editor-toolbar,
+  .editor-actions {
     align-items: stretch;
     flex-direction: column;
   }
@@ -627,12 +605,6 @@ svg {
 
   .workspace {
     padding: 16px;
-  }
-
-  .editor-toolbar,
-  .editor-actions {
-    align-items: stretch;
-    flex-direction: column;
   }
 
   .tool-buttons {
